@@ -27,7 +27,7 @@ def get_data_from_vessel(conn,vessel):
     current_direction   = vessel.direction(ref_frame)
 
     # Target Direction 
-    camera_dir          = (0, 0, 1) # orientation of camera 
+    camera_dir          = (1,0,0) # orientation of camera   # Y+ direction (upward from satellite)
     
     # To transform camera direction from vessel frame to surface direction (Where the camera is pointing in global world frame)
     camera_dir_world    = conn.space_center.transform_direction (
@@ -36,7 +36,7 @@ def get_data_from_vessel(conn,vessel):
         ref_frame                         # Transform to this 
     ) 
 
-    target_dir          = (0, 0, -1) # straight down
+    target_dir          = (1,0,0) # straight down (toward Earth) maybe idk 😭 still testing 
 
     angular_velocity    = vessel.angular_velocity(ref_frame)
 

@@ -1,15 +1,16 @@
 pid:
   pitch:
-    kp: 1.5
-    ki: 0.1
-    kd: 2.0
+    kp: 0.15
+    ki: 0.00
+    kd: 0.08
   yaw:
-    kp: 1.4
-    ki: 0.1
-    kd: 1.8
+    kp: 0.15
+    ki: 0.00
+    kd: 0.08
   roll:
-    kp: 1.2
-    ki: 0.1
-    kd: 1.6
+    kp: 0.10
+    ki: 0.00
+    kd: 0.05
 
-deadzone_angle_deg: 0.5
+deadzone_angle_deg: 2.0
+max_control_output: 0.5
