@@ -40,7 +40,7 @@ def get_data_from_vessel(conn,vessel):
 
     angular_velocity    = vessel.angular_velocity(ref_frame)
 
-    angle_error         = get_angle(camera_dir_world, target_dir)
+    angle_error         = get_angle(camera_dir_world, target_dir) # how much to correct, but not in which direction.
 
     return {
         "current_direction"   : current_direction,
