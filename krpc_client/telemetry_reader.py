@@ -8,44 +8,52 @@ more stable, so it's easier to control and keep the camera facing the ground.
 import krpc
 import math 
 
+# Camera orientation in the vessel's local reference frame (+Y is "up" on most probe cores)
+camera_local_dir = (0, 1, 0)
 
 def connect_to_ksp():
-    return krpc.connect(name = "LEO-Sat")
+    return krpc.connect(name="LEO-Sat")
 
+def normalize(vec):
+    mag = math.sqrt(sum(x**2 for x in vec))
+    return tuple(x / mag for x in vec)
 
-def get_data_from_vessel(conn,vessel):
+def angle_between(v1, v2):
+    dot  = sum(a * b for a, b in zip(v1, v2))
+    mag1 = math.sqrt(sum(a * a for a in v1))
+    mag2 = math.sqrt(sum(b * b for b in v2))
+    return math.acos(dot / (mag1 * mag2))  # radians
 
+def get_data_from_vessel(conn, vessel):
+    # Reference frame where directions make physical sense (planet-centered inertial frame)
+    ref_frame = vessel.orbit.body.reference_frame
 
-    # helper fun (for angle between the camera_dir_world and target_direction)
-    def get_angle(v1, v2):
-        dot  = sum(a * b for a, b in zip(v1,v2))
-        mag1 = math.sqrt(sum(a * a for a in v1))
-        mag2 = math.sqrt(sum(b * b for b in v2))
-        return math.acos(dot/(mag1 * mag2)) # radians
-    
-    ref_frame           = vessel.surface_reference_frame  # orientation relative to the planet’s surface.
-    current_direction   = vessel.direction(ref_frame)
+    # Compute satellite's position in world coordinates
+    position_world = vessel.position(ref_frame)
 
-    # Target Direction 
-    camera_dir          = (1,0,0) # orientation of camera   # Y+ direction (upward from satellite)
-    
-    # To transform camera direction from vessel frame to surface direction (Where the camera is pointing in global world frame)
-    camera_dir_world    = conn.space_center.transform_direction (
-        camera_dir,                       # (0,0,-1) pointing up
-        vessel.reference_frame,           # local vector from here
-        ref_frame                         # Transform to this 
-    ) 
+    # Compute normalized direction toward planet center (i.e., nadir)
+    target_dir = tuple(-x for x in normalize(position_world))
 
-    target_dir          = (1,0,0) # straight down (toward Earth) maybe idk 😭 still testing 
+    # Transform camera direction from vessel-local to world frame
+    camera_dir_world = conn.space_center.transform_direction(
+        camera_local_dir,
+        vessel.reference_frame,     # from vessel-local frame
+        ref_frame                   # to world/planet frame
+    )
 
-    angular_velocity    = vessel.angular_velocity(ref_frame)
+    # Compute angle between camera and target direction
+    angle_error = angle_between(camera_dir_world, target_dir)
 
-    angle_error         = get_angle(camera_dir_world, target_dir) # how much to correct, but not in which direction.
+    # Optional: Get vessel's angular velocity for stabilization control
+    angular_velocity = vessel.angular_velocity(ref_frame)
+
+    # Optional (if needed): vessel.direction in this frame
+    # current_direction = vessel.direction(ref_frame)
 
     return {
-        "current_direction"   : current_direction,
-        "camera_dir_world"    : camera_dir_world,
-        "target_dir"          : target_dir,
-        "angular_velocity"    : angular_velocity,
-        "angle_to_target_deg" : math.degrees(angle_error)
+        # "current_direction": current_direction,  # Uncomment if needed
+        "camera_dir_world": camera_dir_world,
+        "target_dir": target_dir,
+        "angular_velocity": angular_velocity,
+        "angle_to_target_deg": math.degrees(angle_error)
     }
